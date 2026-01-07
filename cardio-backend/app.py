@@ -1,35 +1,41 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import joblib
 import numpy as np
+import os
 
-app = Flask(__name__)
-
-# ✅ Proper CORS configuration for React frontend
-CORS(
-    app,
-    resources={r"/*": {"origins": ["http://localhost:3000", "http://127.0.0.1:3000"]}},
-    supports_credentials=True,
+# -----------------------------
+# App Configuration
+# -----------------------------
+app = Flask(
+    __name__,
+    static_folder="../frontend/build",
+    static_url_path=""
 )
 
-# Load trained model & scaler
-model = joblib.load("rf_model.pkl")
-scaler = joblib.load("scaler.pkl")
+# ✅ Allow same-origin + future flexibility
+CORS(app)
 
-@app.route("/", methods=["GET"])
+# -----------------------------
+# Load ML Model & Scaler (ONCE)
+# -----------------------------
+MODEL_PATH = os.getenv("MODEL_PATH", "backend/rf_model.pkl")
+SCALER_PATH = os.getenv("SCALER_PATH", "backend/scaler.pkl")
+
+model = joblib.load(MODEL_PATH)
+scaler = joblib.load(SCALER_PATH)
+
+# -----------------------------
+# API Routes
+# -----------------------------
+@app.route("/api", methods=["GET"])
 def home():
     return jsonify({"message": "Cardio Disease Prediction API is running"})
 
-# ✅ Allow POST + OPTIONS (important)
-@app.route("/predict", methods=["POST", "OPTIONS"])
+@app.route("/api/predict", methods=["POST"])
 def predict():
-
-    # 🔁 Handle preflight request
-    if request.method == "OPTIONS":
-        return jsonify({"message": "CORS preflight OK"}), 200
-
     try:
-        data = request.get_json(force=True)
+        data = request.get_json()
 
         # ---------- INPUTS ----------
         gender = int(data["gender"])
@@ -49,7 +55,7 @@ def predict():
         bmi = round(weight / (height_m ** 2), 2)
 
         # ---------- MODEL INPUT ----------
-        input_data = np.array([[
+        input_data = np.array([[ 
             gender, height, weight, ap_hi, ap_lo,
             cholesterol, gluc, smoke, alco, active,
             age_years, bmi
@@ -59,7 +65,7 @@ def predict():
 
         # ---------- MODEL PREDICTION ----------
         if hasattr(model, "predict_proba"):
-            proba = model.predict_proba(input_scaled)[0][1]
+            proba = float(model.predict_proba(input_scaled)[0][1])
         else:
             proba = float(model.predict(input_scaled)[0])
 
@@ -75,7 +81,6 @@ def predict():
         else:
             risk = "LOW RISK"
 
-        # ---------- RESPONSE ----------
         return jsonify({
             "risk": risk,
             "risk_score": round(proba, 2),
@@ -85,6 +90,16 @@ def predict():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
+# -----------------------------
+# Serve React Frontend
+# -----------------------------
+@app.route("/")
+@app.route("/<path:path>")
+def serve_react(path="index.html"):
+    return send_from_directory(app.static_folder, path)
 
+# -----------------------------
+# Main
+# -----------------------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000)

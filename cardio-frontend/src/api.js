@@ -1,36 +1,45 @@
+// 🔹 If REACT_APP_API_BASE_URL is set (local dev), use it
+// 🔹 Otherwise (Render production), use same-origin
+
 export const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL && process.env.REACT_APP_API_BASE_URL.trim().length > 0
-    ? process.env.REACT_APP_API_BASE_URL.trim().replace(/\/+$/, '')
-    : '';
+  process.env.REACT_APP_API_BASE_URL &&
+    process.env.REACT_APP_API_BASE_URL.trim().length > 0
+    ? process.env.REACT_APP_API_BASE_URL.trim().replace(/\/+$/, "")
+    : ""; // ← same domain in production
 
 export async function postJson(path, body) {
   const url = `${API_BASE_URL}${path}`;
-  
+
   try {
     const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(body),
     });
 
-    // Handle network errors
+    // ❌ Server error handling
     if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || `Server error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Server error: ${response.status}`;
+
+      try {
+        const data = await response.json();
+        if (data?.error) errorMessage = data.error;
+      } catch (_) { }
+
+      throw new Error(errorMessage);
     }
 
-    const data = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
-    // Handle fetch errors (network, CORS, etc.)
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+    // 🌐 Network / CORS / Backend down
+    if (error instanceof TypeError) {
       throw new Error(
-        'Failed to connect to the server. Please make sure the backend is running on http://localhost:5000'
+        "Unable to reach the server. Please check your internet connection or try again later."
       );
     }
-    // Re-throw other errors
+
     throw error;
   }
 }
-
-
