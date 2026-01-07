@@ -5,10 +5,10 @@ import numpy as np
 
 app = Flask(__name__)
 
-# ✅ Proper CORS configuration for Next.js
+# ✅ Proper CORS configuration for React frontend
 CORS(
     app,
-    resources={r"/*": {"origins": "http://localhost:3000"}},
+    resources={r"/*": {"origins": ["http://localhost:3000", "http://127.0.0.1:3000"]}},
     supports_credentials=True,
 )
 
