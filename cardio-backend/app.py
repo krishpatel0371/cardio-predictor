@@ -9,21 +9,30 @@ import os
 # -----------------------------
 app = Flask(
     __name__,
-    static_folder="../frontend/build",
+    static_folder="../frontend/build",  # change if your frontend path is different
     static_url_path=""
 )
 
-# ✅ Allow same-origin + future flexibility
 CORS(app)
+
+# -----------------------------
+# Base Directory (Safe Path Fix)
+# -----------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+MODEL_PATH = os.getenv("MODEL_PATH", os.path.join(BASE_DIR, "rf_model.pkl"))
+SCALER_PATH = os.getenv("SCALER_PATH", os.path.join(BASE_DIR, "scaler.pkl"))
 
 # -----------------------------
 # Load ML Model & Scaler (ONCE)
 # -----------------------------
-MODEL_PATH = os.getenv("MODEL_PATH", "backend/rf_model.pkl")
-SCALER_PATH = os.getenv("SCALER_PATH", "backend/scaler.pkl")
-
-model = joblib.load(MODEL_PATH)
-scaler = joblib.load(SCALER_PATH)
+try:
+    model = joblib.load(MODEL_PATH)
+    scaler = joblib.load(SCALER_PATH)
+    print("✅ Model and Scaler loaded successfully")
+except Exception as e:
+    print("❌ Error loading model/scaler:", e)
+    raise e
 
 # -----------------------------
 # API Routes
@@ -55,7 +64,7 @@ def predict():
         bmi = round(weight / (height_m ** 2), 2)
 
         # ---------- MODEL INPUT ----------
-        input_data = np.array([[ 
+        input_data = np.array([[
             gender, height, weight, ap_hi, ap_lo,
             cholesterol, gluc, smoke, alco, active,
             age_years, bmi
@@ -90,16 +99,21 @@ def predict():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
+
 # -----------------------------
 # Serve React Frontend
 # -----------------------------
 @app.route("/")
 @app.route("/<path:path>")
 def serve_react(path="index.html"):
-    return send_from_directory(app.static_folder, path)
+    if os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, "index.html")
+
 
 # -----------------------------
 # Main
 # -----------------------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=True)
