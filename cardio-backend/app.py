@@ -9,30 +9,28 @@ import os
 # -----------------------------
 app = Flask(
     __name__,
-    static_folder="../frontend/build",  # change if your frontend path is different
+    static_folder="../cardio-frontend/build",
     static_url_path=""
 )
 
 CORS(app)
 
 # -----------------------------
-# Base Directory (Safe Path Fix)
+# Correct Absolute Paths
 # -----------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-MODEL_PATH = os.getenv("MODEL_PATH", os.path.join(BASE_DIR, "rf_model.pkl"))
-SCALER_PATH = os.getenv("SCALER_PATH", os.path.join(BASE_DIR, "scaler.pkl"))
+MODEL_PATH = os.path.join(BASE_DIR, "rf_model.pkl")
+SCALER_PATH = os.path.join(BASE_DIR, "scaler.pkl")
+
+print("Model path:", MODEL_PATH)
+print("Scaler path:", SCALER_PATH)
 
 # -----------------------------
-# Load ML Model & Scaler (ONCE)
+# Load ML Model & Scaler
 # -----------------------------
-try:
-    model = joblib.load(MODEL_PATH)
-    scaler = joblib.load(SCALER_PATH)
-    print("✅ Model and Scaler loaded successfully")
-except Exception as e:
-    print("❌ Error loading model/scaler:", e)
-    raise e
+model = joblib.load(MODEL_PATH)
+scaler = joblib.load(SCALER_PATH)
 
 # -----------------------------
 # API Routes
@@ -46,7 +44,6 @@ def predict():
     try:
         data = request.get_json()
 
-        # ---------- INPUTS ----------
         gender = int(data["gender"])
         height = float(data["height"])
         weight = float(data["weight"])
@@ -59,11 +56,9 @@ def predict():
         active = int(data["active"])
         age_years = float(data["age"])
 
-        # ---------- BMI ----------
         height_m = height / 100
         bmi = round(weight / (height_m ** 2), 2)
 
-        # ---------- MODEL INPUT ----------
         input_data = np.array([[
             gender, height, weight, ap_hi, ap_lo,
             cholesterol, gluc, smoke, alco, active,
@@ -72,13 +67,11 @@ def predict():
 
         input_scaled = scaler.transform(input_data)
 
-        # ---------- MODEL PREDICTION ----------
         if hasattr(model, "predict_proba"):
             proba = float(model.predict_proba(input_scaled)[0][1])
         else:
             proba = float(model.predict(input_scaled)[0])
 
-        # ---------- MEDICAL RULE OVERRIDE ----------
         if bmi >= 35:
             risk = "HIGH RISK (Severe Obesity)"
         elif bmi >= 30 and ap_hi >= 140:
@@ -108,12 +101,11 @@ def predict():
 def serve_react(path="index.html"):
     if os.path.exists(os.path.join(app.static_folder, path)):
         return send_from_directory(app.static_folder, path)
-    else:
-        return send_from_directory(app.static_folder, "index.html")
+    return send_from_directory(app.static_folder, "index.html")
 
 
 # -----------------------------
 # Main
 # -----------------------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000)
