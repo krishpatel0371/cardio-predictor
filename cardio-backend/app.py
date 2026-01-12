@@ -56,13 +56,10 @@ def predict():
         active = int(data["active"])
         age_years = float(data["age"])
 
-        height_m = height / 100
-        bmi = round(weight / (height_m ** 2), 2)
-
         input_data = np.array([[
             gender, height, weight, ap_hi, ap_lo,
             cholesterol, gluc, smoke, alco, active,
-            age_years, bmi
+            age_years
         ]])
 
         input_scaled = scaler.transform(input_data)
@@ -72,11 +69,7 @@ def predict():
         else:
             proba = float(model.predict(input_scaled)[0])
 
-        if bmi >= 35:
-            risk = "HIGH RISK (Severe Obesity)"
-        elif bmi >= 30 and ap_hi >= 140:
-            risk = "HIGH RISK (Obesity + High BP)"
-        elif proba >= 0.75:
+        if proba >= 0.75:
             risk = "HIGH RISK"
         elif proba >= 0.45:
             risk = "MODERATE RISK"
