@@ -9,7 +9,7 @@ function Home() {
           <h1>Cardiovascular Disease Risk Predictor</h1>
           <p className="hero-subtitle">
             Assess your risk of cardiovascular disease using AI-powered analysis of your blood 
-            pressure, BMI, cholesterol, glucose levels, and lifestyle factors. Early detection 
+            pressure, cholesterol, glucose levels, and lifestyle factors. Early detection 
             saves lives.
           </p>
           <div className="hero-actions">
