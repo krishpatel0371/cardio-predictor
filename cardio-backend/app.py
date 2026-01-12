@@ -78,8 +78,7 @@ def predict():
 
         return jsonify({
             "risk": risk,
-            "risk_score": round(proba, 2),
-            "bmi": bmi
+            "risk_score": round(proba, 2)
         })
 
     except Exception as e:
