@@ -39,7 +39,7 @@ scaler = joblib.load(SCALER_PATH)
 def home():
     return jsonify({"message": "Cardio Disease Prediction API is running"})
 
-@app.route("/api/predict", methods=["POST"])
+@app.route("/predict", methods=["POST"])
 def predict():
     try:
         data = request.get_json()
