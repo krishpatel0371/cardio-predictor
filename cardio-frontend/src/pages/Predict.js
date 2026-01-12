@@ -25,16 +25,7 @@ function Predict() {
   const [touched, setTouched] = useState({});
 
   // Calculate BMI dynamically
-  const calculatedBMI = useMemo(() => {
-    if (form.height && form.weight) {
-      const heightInMeters = parseFloat(form.height) / 100;
-      const weight = parseFloat(form.weight);
-      if (heightInMeters > 0 && weight > 0) {
-        return (weight / (heightInMeters * heightInMeters)).toFixed(1);
-      }
-    }
-    return null;
-  }, [form.height, form.weight]);
+
 
   // Calculate form completion percentage
   const formProgress = useMemo(() => {
@@ -76,7 +67,7 @@ function Predict() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate blood pressure
     if (!bpValidation.valid) {
       setError(bpValidation.message || 'Please check your blood pressure values');
@@ -125,16 +116,7 @@ function Predict() {
   };
 
   // Get BMI category
-  const getBMICategory = (bmi) => {
-    if (!bmi) return null;
-    const bmiNum = parseFloat(bmi);
-    if (bmiNum < 18.5) return { label: 'Underweight', color: '#3b82f6' };
-    if (bmiNum < 25) return { label: 'Normal', color: '#10b981' };
-    if (bmiNum < 30) return { label: 'Overweight', color: '#f59e0b' };
-    return { label: 'Obese', color: '#ef4444' };
-  };
 
-  const bmiCategory = calculatedBMI ? getBMICategory(calculatedBMI) : null;
 
   return (
     <div className="page">
@@ -147,8 +129,8 @@ function Predict() {
       {/* Progress Bar */}
       <div className="progress-container">
         <div className="progress-bar">
-          <div 
-            className="progress-fill" 
+          <div
+            className="progress-fill"
             style={{ width: `${formProgress}%` }}
           ></div>
         </div>
@@ -213,18 +195,7 @@ function Predict() {
               )}
             </div>
 
-            {/* Dynamic BMI Display */}
-            {calculatedBMI && (
-              <div className="form-field bmi-display">
-                <label>Calculated BMI</label>
-                <div className="bmi-value" style={{ color: bmiCategory?.color }}>
-                  {calculatedBMI} 
-                  {bmiCategory && (
-                    <span className="bmi-category"> ({bmiCategory.label})</span>
-                  )}
-                </div>
-              </div>
-            )}
+
 
             <div className="form-field">
               <label>Systolic BP (ap_hi)</label>
@@ -315,10 +286,10 @@ function Predict() {
               {error.includes('Failed to connect') && (
                 <div style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
                   <p style={{ margin: '0.25rem 0' }}>💡 Make sure the backend server is running:</p>
-                  <code style={{ 
-                    display: 'block', 
-                    background: 'rgba(0,0,0,0.1)', 
-                    padding: '0.5rem', 
+                  <code style={{
+                    display: 'block',
+                    background: 'rgba(0,0,0,0.1)',
+                    padding: '0.5rem',
                     borderRadius: '0.25rem',
                     marginTop: '0.5rem',
                     fontSize: '0.8rem'
@@ -360,7 +331,7 @@ function Predict() {
             <div className={`result-content ${showResult ? 'fade-in' : ''}`}>
               <div className="result-main">
                 <span className="result-label">Risk Category</span>
-                <span 
+                <span
                   className={`result-value ${result.risk?.toLowerCase().includes('high') ? 'high' : result.risk?.toLowerCase().includes('moderate') ? 'moderate' : 'low'}`}
                   style={{ animation: 'pulse 0.5s ease-out' }}
                 >
@@ -373,20 +344,17 @@ function Predict() {
                   <span className="result-label">Risk Score</span>
                   <span className="result-chip">{result.risk_score}</span>
                 </div>
-                <div className="result-item">
-                  <span className="result-label">BMI</span>
-                  <span className="result-chip">{result.bmi}</span>
-                </div>
+
               </div>
 
               {/* Risk Level Indicator */}
               <div className="risk-indicator">
                 <div className="risk-bar">
-                  <div 
+                  <div
                     className={`risk-fill ${result.risk?.toLowerCase().includes('high') ? 'risk-high' : result.risk?.toLowerCase().includes('moderate') ? 'risk-moderate' : 'risk-low'}`}
-                    style={{ 
-                      width: result.risk?.toLowerCase().includes('high') ? '100%' : 
-                             result.risk?.toLowerCase().includes('moderate') ? '60%' : '30%',
+                    style={{
+                      width: result.risk?.toLowerCase().includes('high') ? '100%' :
+                        result.risk?.toLowerCase().includes('moderate') ? '60%' : '30%',
                       animation: 'slideWidth 1s ease-out'
                     }}
                   ></div>
