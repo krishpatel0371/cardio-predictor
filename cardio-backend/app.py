@@ -10,7 +10,7 @@ import os
 app = Flask(
     __name__,
     static_folder="../cardio-frontend/build",
-    static_url_path=""
+    static_url_path
 )
 
 CORS(app)
